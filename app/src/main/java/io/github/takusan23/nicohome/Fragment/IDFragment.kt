@@ -55,70 +55,30 @@ class IDFragment : Fragment() {
         googleCast = GoogleCast(context!!)
 
         fragment_id_play_button.setOnClickListener {
-            Snackbar.make(
-                fragment_id_play_button,
-                context?.getString(R.string.not_connect_cast_devices)!!,
-                Snackbar.LENGTH_SHORT
-            ).show()
-        }
-
-        googleCast.sessionManagerListener = object : SessionManagerListener<CastSession> {
-            override fun onSessionStarted(p0: CastSession?, p1: String?) {
-                fragment_id_play_button.setOnClickListener {
-                    GlobalScope.launch {
-                        //動画情報取得
-                        val json = getNicoVideoHTML().await()
-                        //JSONぱーす
-                        val jsonObject = JSONObject(json)
-                        val title = jsonObject.getJSONObject("video").getString("title")
-                        val id = jsonObject.getJSONObject("video").getString("id")
-                        val thumbnailURL =
-                            jsonObject.getJSONObject("video").getString("thumbnailURL")
-                        googleCast.mediaTitle = title
-                        googleCast.mediaThumbnailURL = thumbnailURL
-                        googleCast.mediaSubTitle = id
-                        val contentUri = getContentURI(jsonObject).await()
-                        googleCast.mediaUri = contentUri
-                        //再生
-                        activity?.runOnUiThread {
-                            googleCast.play(p0)
-                        }
+            heartBeatTimer = Timer()
+            if (googleCast.castContext.sessionManager.currentCastSession != null) {
+                GlobalScope.launch {
+                    //動画情報取得
+                    val json = getNicoVideoHTML().await()
+                    //JSONぱーす
+                    val jsonObject = JSONObject(json)
+                    val title = jsonObject.getJSONObject("video").getString("title")
+                    val id = jsonObject.getJSONObject("video").getString("id")
+                    val thumbnailURL =
+                        jsonObject.getJSONObject("video").getString("thumbnailURL")
+                    googleCast.mediaTitle = title
+                    googleCast.mediaThumbnailURL = thumbnailURL
+                    googleCast.mediaSubTitle = id
+                    val contentUri = getContentURI(jsonObject).await()
+                    googleCast.mediaUri = contentUri
+                    //再生
+                    activity?.runOnUiThread {
+                        googleCast.play(googleCast.castContext.sessionManager.currentCastSession)
                     }
                 }
+            } else {
+                Snackbar.make(fragment_id_play_button,getString(R.string.not_connect_cast_devices),Snackbar.LENGTH_SHORT).show()
             }
-
-            override fun onSessionResumeFailed(p0: CastSession?, p1: Int) {
-
-            }
-
-            override fun onSessionSuspended(p0: CastSession?, p1: Int) {
-
-            }
-
-            override fun onSessionEnded(p0: CastSession?, p1: Int) {
-
-            }
-
-            override fun onSessionResumed(p0: CastSession?, p1: Boolean) {
-
-            }
-
-            override fun onSessionStarting(p0: CastSession?) {
-
-            }
-
-            override fun onSessionResuming(p0: CastSession?, p1: String?) {
-
-            }
-
-            override fun onSessionEnding(p0: CastSession?) {
-
-            }
-
-            override fun onSessionStartFailed(p0: CastSession?, p1: Int) {
-
-            }
-
         }
     }
 
