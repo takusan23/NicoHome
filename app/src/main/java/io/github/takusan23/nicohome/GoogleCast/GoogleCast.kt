@@ -21,7 +21,7 @@ class GoogleCast(val context: Context) {
 
     var sessionManagerListener = object : SessionManagerListener<CastSession> {
         override fun onSessionStarted(p0: CastSession?, p1: String?) {
-            play(p0)
+
         }
 
         override fun onSessionResumeFailed(p0: CastSession?, p1: Int) {

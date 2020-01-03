@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
+import com.google.android.gms.cast.Cast
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
@@ -69,15 +70,21 @@ class IDFragment : Fragment() {
                     googleCast.mediaTitle = title
                     googleCast.mediaThumbnailURL = thumbnailURL
                     googleCast.mediaSubTitle = id
-                    val contentUri = getContentURI(jsonObject).await()
-                    googleCast.mediaUri = contentUri
-                    //再生
-                    activity?.runOnUiThread {
-                        googleCast.play(googleCast.castContext.sessionManager.currentCastSession)
+                    if (!jsonObject.getJSONObject("video").isNull("dmcInfo")) {
+                        val contentUri = getContentURI(jsonObject).await()
+                        googleCast.mediaUri = contentUri
+                        //再生
+                        activity?.runOnUiThread {
+                            googleCast.play(googleCast.castContext.sessionManager.currentCastSession)
+                        }
                     }
                 }
             } else {
-                Snackbar.make(fragment_id_play_button,getString(R.string.not_connect_cast_devices),Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(
+                    fragment_id_play_button,
+                    getString(R.string.not_connect_cast_devices),
+                    Snackbar.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -120,6 +127,7 @@ class IDFragment : Fragment() {
                         Snackbar.LENGTH_SHORT
                     ).show()
                 } // googleCast.mediaUri = url
+                return@async jsonObject.toString()
             }
         } else {
             showToast("${getString(R.string.error)}\n${response.code}")
@@ -131,7 +139,6 @@ class IDFragment : Fragment() {
     fun getContentURI(jsonObject: JSONObject): Deferred<String> = GlobalScope.async {
         val dmcInfo = jsonObject.getJSONObject("video").getJSONObject("dmcInfo")
         val sessionAPI = dmcInfo.getJSONObject("session_api")
-        println(sessionAPI.toString())
         //JSONつくる
         val sessionPOSTJSON = JSONObject().apply {
             put("session", JSONObject().apply {
