@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">NicoHome</string>
+    <string name="mail">Mail</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="play">Play</string>
+    <string name="video_id">Video ID</string>
+    <string name="mylist">Mylist</string>
+    <string name="error">There was a problem.</string>
+    <string name="succeeded">Succeeded</string>
+    <string name="smile_server_error">Smile server videos cannot be played.</string>
+    <string name="not_connect_cast_devices">Connect to the cast device.</string>
+</resources>

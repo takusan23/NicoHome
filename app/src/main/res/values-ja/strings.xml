@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NicoHome</string>
+    <string name="mail">メールアドレス</string>
+    <string name="password">パスワード</string>
+    <string name="login">ログイン</string>
+    <string name="play">再生</string>
+    <string name="video_id">動画ID（sm9やsm157など）</string>
+    <string name="mylist">マイリスト</string>
+    <string name="error">問題が発生しました。</string>
+    <string name="succeeded">成功しました</string>
+    <string name="smile_server_error">smileサーバーの動画は再生できません。</string>
+    <string name="not_connect_cast_devices">キャストデバイスに接続してください。</string>
+</resources>
