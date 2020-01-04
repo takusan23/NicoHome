@@ -2,16 +2,20 @@ package io.github.takusan23.nicohome.GoogleCast
 
 import android.app.Activity
 import android.content.Context
+import android.view.View
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
+import com.google.android.gms.cast.MediaStatus
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.common.images.WebImage
+import com.google.android.material.snackbar.Snackbar
 import io.github.takusan23.nicohome.NicoVideo.NicoVideoCache
+import io.github.takusan23.nicohome.R
 import io.github.takusan23.nicohome.WebServer.HttpServer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -23,6 +27,13 @@ class GoogleCast(val context: Context) {
     val castContext = CastContext.getSharedInstance(context)
     var nicoVideoCache = NicoVideoCache(context)
 
+    //Webサーバー。Smileサーバー対策
+    val httpServer = HttpServer(context)
+
+    init {
+        httpServer.start()
+    }
+
     var mediaUri = ""
     var mediaTitle = ""
     var mediaSubTitle = ""
@@ -32,6 +43,11 @@ class GoogleCast(val context: Context) {
 
     var pref_sessiong = PreferenceManager.getDefaultSharedPreferences(context)
     var user_session = pref_sessiong.getString("user_session", "")
+
+    //Snackbarに使う。
+    lateinit var snackbarView: View
+    //Snackbarの表示位置
+    lateinit var snackbarPosView: View
 
     var sessionManagerListener = object : SessionManagerListener<CastSession> {
         override fun onSessionStarted(p0: CastSession?, p1: String?) {
@@ -83,6 +99,7 @@ class GoogleCast(val context: Context) {
             sessionManagerListener,
             CastSession::class.java
         )
+        httpServer.stop()
     }
 
     fun play(castSession: CastSession?) {
@@ -152,24 +169,29 @@ class GoogleCast(val context: Context) {
                 if (!isExists) {
                     //キャッシュ領域にない場合は取りに行く。
                     val nicoVideoCache = NicoVideoCache(context)
-                    GlobalScope.launch {
-                        //ファイルの場所を返す
-                        val path =nicoVideoCache.getVideo(id, mediaUri, user_session, nicoHistory).await()
-                        val httpServer = HttpServer(context, path)
-                        httpServer.serveVideo()
-                        //Webサーバー開始
-                        httpServer.start()
-                        //GoogleCastで再生
-                        mediaUri = "http://${httpServer.getIPAddress()}"
-                        (context as Activity).runOnUiThread { play(session) }
-                    }
+                    //キャッシュが必要なのでSnackbarで聞く
+                    Snackbar.make(
+                        snackbarView,
+                        context.getString(R.string.cache_snackbar),
+                        Snackbar.LENGTH_SHORT
+                    ).setAction(context.getString(R.string.cache_get)) {
+                        GlobalScope.launch {
+                            //ファイルの場所を返す
+                            val path =
+                                nicoVideoCache.getVideo(id, mediaUri, user_session, nicoHistory)
+                                    .await()
+                            //Webサーバー開始
+                            httpServer.serveVideo(path)
+                            //GoogleCastで再生
+                            mediaUri = "http://${httpServer.getIPAddress()}"
+                            (context as Activity).runOnUiThread { play(session) }
+                        }
+                    }.show()
                 } else {
                     //キャッシュ領域にあるのでWebサーバーを展開
                     if (File(path).exists()) {
-                        val httpServer = HttpServer(context, path)
                         //Webサーバー開始
-                        httpServer.serveVideo()
-                        httpServer.start()
+                        httpServer.serveVideo(path)
                         //GoogleCastで再生
                         mediaUri = "http://${httpServer.getIPAddress()}"
                         (context as Activity).runOnUiThread {

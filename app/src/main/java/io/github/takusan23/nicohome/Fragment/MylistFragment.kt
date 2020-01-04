@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import io.github.takusan23.nicohome.Adapter.MylistAdapter
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
+import io.github.takusan23.nicohome.MainActivity
 import io.github.takusan23.nicohome.NicoVideo.NicoVideo
 import io.github.takusan23.nicohome.R
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_mylist.*
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -49,6 +51,9 @@ class MylistFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         googleCast = GoogleCast(context!!)
+        googleCast.snackbarView = fragment_mylist_recyclerview
+        googleCast.snackbarPosView = (activity as MainActivity).main_activity_bottom_nav
+
         //ニコニコ動画再生をまとめたやつ。
         nicoVideo = NicoVideo(
             activity as AppCompatActivity,

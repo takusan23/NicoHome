@@ -12,4 +12,7 @@
     <string name="smile_server_error">smileサーバーの動画は再生できません。</string>
     <string name="not_connect_cast_devices">キャストデバイスに接続してください。</string>
     <string name="video_cache_ok">動画をキャッシュしました。</string>
+    <string name="cache_snackbar">smileサーバーの動画は直接再生できないため、端末にキャッシュ保存します</string>
+    <string name="cache_get">取得</string>
+    <string name="licence">ライセンス</string>
 </resources>

@@ -5,17 +5,19 @@ import android.net.wifi.WifiManager
 import fi.iki.elonen.NanoHTTPD
 import java.io.File
 
-class HttpServer(private val context: Context, val path: String, val port: Int = 8080) :
+class HttpServer(private val context: Context, val port: Int = 8080) :
     NanoHTTPD(port) {
 
+    var videoResponse: Response? = null
+
     override fun serve(session: NanoHTTPD.IHTTPSession): Response? {
-        return serveVideo()
+        return videoResponse
     }
 
-    fun serveVideo(): NanoHTTPD.Response {
+    fun serveVideo(path:String) {
         //ScopedStorageなので自由に使え
         val file = File(path)
-        return NanoHTTPD.newChunkedResponse(Response.Status.OK, "video/mp4", file.inputStream())
+        videoResponse = NanoHTTPD.newChunkedResponse(Response.Status.OK, "video/mp4", file.inputStream())
     }
 
     /** IPアドレス取得 */
