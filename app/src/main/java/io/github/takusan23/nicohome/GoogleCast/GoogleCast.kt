@@ -2,6 +2,7 @@ package io.github.takusan23.nicohome.GoogleCast
 
 import android.content.Context
 import androidx.core.net.toUri
+import androidx.preference.PreferenceManager
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
@@ -9,6 +10,7 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.common.images.WebImage
+
 
 class GoogleCast(val context: Context) {
 
@@ -18,6 +20,11 @@ class GoogleCast(val context: Context) {
     var mediaTitle = ""
     var mediaSubTitle = ""
     var mediaThumbnailURL = ""
+
+    var nicoHistory = ""
+
+    var pref_sessiong = PreferenceManager.getDefaultSharedPreferences(context)
+    var user_session = pref_sessiong.getString("user_session", "")
 
     var sessionManagerListener = object : SessionManagerListener<CastSession> {
         override fun onSessionStarted(p0: CastSession?, p1: String?) {
@@ -87,6 +94,29 @@ class GoogleCast(val context: Context) {
         }
         val remoteMediaClient = castSession?.remoteMediaClient
         remoteMediaClient?.load(mediaLoadRequestData.build())
+
+
+/*
+        //ExoPlayer
+        val player = ExoPlayerFactory.newSimpleInstance(context)
+        val defaultHttpDataSourceFactory =
+            DefaultHttpDataSourceFactory("NicoHome;@takusan_23", null)
+        defaultHttpDataSourceFactory.defaultRequestProperties.set(
+            "Cookie",
+            "user_session=$user_session;nicohistory=$nicoHistory"
+        )
+        val dataSourceFactory =
+            DefaultDataSourceFactory(
+                context,
+                null,
+                defaultHttpDataSourceFactory
+            )
+        val mediaSource =
+            ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaUri.toUri())
+        player.prepare(mediaSource)
+        player.playWhenReady = true
+*/
+
     }
 
 }
