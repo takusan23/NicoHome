@@ -8,6 +8,7 @@ import com.google.android.gms.cast.framework.CastContext
 import io.github.takusan23.nicohome.Fragment.IDFragment
 import io.github.takusan23.nicohome.Fragment.LoginFragment
 import io.github.takusan23.nicohome.Fragment.MylistFragment
+import io.github.takusan23.nicohome.Fragment.PreferenceFragment
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -43,6 +44,11 @@ class MainActivity : AppCompatActivity() {
                     supportFragmentManager.beginTransaction()
                         .replace(main_activity_fragment.id, MylistFragment()).commit()
                     supportActionBar?.title = getString(R.string.mylist)
+                }
+                R.id.menu_setting->{
+                    supportFragmentManager.beginTransaction()
+                        .replace(main_activity_fragment.id, PreferenceFragment()).commit()
+                    supportActionBar?.title = getString(R.string.settings)
                 }
             }
             true

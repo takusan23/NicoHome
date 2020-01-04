@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:key="setting_cache_clear"
+        android:summary="@string/setting_cache_clear_description"
+        android:title="@string/setting_cache_clear_title" />
+
+    <Preference
+        android:key="setting_licence"
+        android:title="@string/licence" />
+
+    <Preference
+        android:key="setting_this_app"
+        android:title="@string/this_app" />
+
+</PreferenceScreen>

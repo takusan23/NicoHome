@@ -14,4 +14,8 @@
     <string name="cache_snackbar">Since the video of the smile server cannot be played directly, it is cached on the terminal</string>
     <string name="cache_get">Get</string>
     <string name="licence">license</string>
+    <string name="settings">Configuration</string>
+    <string name="setting_cache_clear_title">Clear cache</string>
+    <string name="setting_cache_clear_description">Delete the video saved to play the video on the smile server.</string>
+    <string name="this_app">About this app</string>
 </resources>
