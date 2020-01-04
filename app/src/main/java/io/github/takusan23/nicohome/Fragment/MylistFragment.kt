@@ -5,18 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.QuickContactBadge
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.cast.framework.CastContext
 import com.google.android.material.tabs.TabLayout
 import io.github.takusan23.nicohome.Adapter.MylistAdapter
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
-import io.github.takusan23.nicohome.NicoVideo
+import io.github.takusan23.nicohome.NicoVideo.NicoVideo
 import io.github.takusan23.nicohome.R
 import kotlinx.android.synthetic.main.fragment_mylist.*
 import kotlinx.coroutines.Deferred
@@ -25,7 +23,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import okhttp3.*
 import org.json.JSONObject
-import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.regex.Pattern
 
@@ -53,7 +50,10 @@ class MylistFragment : Fragment() {
 
         googleCast = GoogleCast(context!!)
         //ニコニコ動画再生をまとめたやつ。
-        nicoVideo = NicoVideo(activity as AppCompatActivity, googleCast)
+        nicoVideo = NicoVideo(
+            activity as AppCompatActivity,
+            googleCast
+        )
         //RecyclerView初期化
         initRecyclerView()
         mylistAdapter.nicoVideo = nicoVideo

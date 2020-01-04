@@ -1,5 +1,6 @@
 package io.github.takusan23.nicohome.GoogleCast
 
+import android.app.Activity
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.preference.PreferenceManager
@@ -10,11 +11,17 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.common.images.WebImage
+import io.github.takusan23.nicohome.NicoVideo.NicoVideoCache
+import io.github.takusan23.nicohome.WebServer.HttpServer
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.io.File
 
 
 class GoogleCast(val context: Context) {
 
     val castContext = CastContext.getSharedInstance(context)
+    var nicoVideoCache = NicoVideoCache(context)
 
     var mediaUri = ""
     var mediaTitle = ""
@@ -86,7 +93,7 @@ class GoogleCast(val context: Context) {
         }
         val mediaInfo = MediaInfo.Builder(mediaUri).apply {
             setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            setContentType("videos/mp4")
+            setContentType("video/mp4")
             setMetadata(mediaMetadata)
         }
         val mediaLoadRequestData = MediaLoadRequestData.Builder().apply {
@@ -117,6 +124,61 @@ class GoogleCast(val context: Context) {
         player.playWhenReady = true
 */
 
+    }
+
+    /*
+    * smileサーバーの動画をキャッシュ領域に落とす。
+    *
+    * */
+    fun cachePlay(id: String, session: CastSession) {
+        val path = context.externalCacheDir?.path
+        // println(path)
+        //キャッシュ領域
+        val cacheDir = File(path)
+        cacheDir.apply {
+            //フォルダの中身取得
+            val dirChildList = cacheDir.listFiles()
+            if (dirChildList != null) {
+                //既に存在するかもしれない
+                var isExists = false
+                var path = ""
+                dirChildList.forEach {
+                    if (it.name == "$id.mp4") {
+                        isExists = true
+                        path = it.path
+                    }
+                }
+                //Webさーばー
+                if (!isExists) {
+                    //キャッシュ領域にない場合は取りに行く。
+                    val nicoVideoCache = NicoVideoCache(context)
+                    GlobalScope.launch {
+                        //ファイルの場所を返す
+                        val path =nicoVideoCache.getVideo(id, mediaUri, user_session, nicoHistory).await()
+                        val httpServer = HttpServer(context, path)
+                        httpServer.serveVideo()
+                        //Webサーバー開始
+                        httpServer.start()
+                        //GoogleCastで再生
+                        mediaUri = "http://${httpServer.getIPAddress()}"
+                        (context as Activity).runOnUiThread { play(session) }
+                    }
+                } else {
+                    //キャッシュ領域にあるのでWebサーバーを展開
+                    if (File(path).exists()) {
+                        val httpServer = HttpServer(context, path)
+                        //Webサーバー開始
+                        httpServer.serveVideo()
+                        httpServer.start()
+                        //GoogleCastで再生
+                        mediaUri = "http://${httpServer.getIPAddress()}"
+                        (context as Activity).runOnUiThread {
+                            play(session)
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

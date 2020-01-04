@@ -11,4 +11,5 @@
     <string name="succeeded">成功しました</string>
     <string name="smile_server_error">smileサーバーの動画は再生できません。</string>
     <string name="not_connect_cast_devices">キャストデバイスに接続してください。</string>
+    <string name="video_cache_ok">動画をキャッシュしました。</string>
 </resources>

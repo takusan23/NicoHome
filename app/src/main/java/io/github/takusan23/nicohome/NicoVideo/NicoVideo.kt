@@ -1,11 +1,11 @@
-package io.github.takusan23.nicohome
+package io.github.takusan23.nicohome.NicoVideo
 
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 import com.google.android.material.snackbar.Snackbar
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
-import kotlinx.android.synthetic.main.fragment_id.*
+import io.github.takusan23.nicohome.R
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -38,7 +38,8 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                 response?.apply {
                     if (isSuccessful) {
                         val html = Jsoup.parse(body?.string())
-                        val json = html.getElementById("js-initial-watch-data").attr("data-api-data")
+                        val json =
+                            html.getElementById("js-initial-watch-data").attr("data-api-data")
                         //JSONぱーす
                         val jsonObject = JSONObject(json)
                         val title = jsonObject.getJSONObject("video").getString("title")
@@ -52,6 +53,8 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                             println("新サーバー")
                             //dmcInfoが存在する。
                             //dmcInfoがある場合はJSONを解析してAPIを叩けば動画リンク取得可能。
+                            //なお1.5GB再エンコード問題が始まった。
+                            //あと止めても動く動画が消えることに。。。
                             val contentUri = getContentURI(jsonObject).await()
                             googleCast.mediaUri = contentUri
                             //再生
@@ -60,10 +63,18 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                             }
                         } else {
                             println("smileサーバー")
-                            //smileサーバー
-                            //smileサーバーの動画を再生するにはリクエストヘッダーに動画サイトアクセス時のレスポンスヘッダーのSet-Cookieのなかの
-                            //nicohistoryをくっつけて投げないと 403 が帰ってきます。くそくそくそ
-                            //dmcInfoが存在しない。
+                            /*
+                            * smileサーバー
+                            * smileサーバーの動画を再生するにはリクエストヘッダーに動画サイトアクセス時のレスポンスヘッダーのSet-Cookieのなかの
+                            * nicohistoryをくっつけて投げないと 403 が帰ってきます。くそくそくそ
+                            * dmcInfoが存在しない。
+                            *
+                            * しかしsmileサーバーの動画が再生できないとかこのアプリを作った意味が消失するので
+                            * 一時的にローカルに動画をDLしてその後Webサーバーを展開して再生できるようにする。
+                            *
+                            * いやsmileサーバーの動画多くない？変換しろよ運営
+                            *
+                            * */
                             println("smileサーバー")
                             val url = jsonObject.getJSONObject("video").getJSONObject("smileInfo")
                                 .getString("url")
@@ -77,10 +88,10 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                                     nicohistory = it.value
                                 }
                             }
+                            googleCast.nicoHistory = nicohistory
+                            googleCast.mediaUri = url
                             appCompatActivity.runOnUiThread {
-                                googleCast.mediaUri = url
-                                googleCast.nicoHistory = nicohistory
-                                googleCast.play(googleCast.castContext.sessionManager.currentCastSession)
+                                googleCast.cachePlay(id, googleCast.castContext.sessionManager.currentCastSession)
                             }
                         }
                     } else {

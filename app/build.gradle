@@ -31,6 +31,8 @@ dependencies {
 //    //ExoPlayer
 //    implementation 'com.google.android.exoplayer:exoplayer-core:2.10.4'
 //    implementation 'com.google.android.exoplayer:extension-cast:2.10.4'
+    //Webサーバー
+    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
     //画像読み込むやつ
     implementation 'com.github.bumptech.glide:glide:4.9.0' //これ
     //引っ張って更新

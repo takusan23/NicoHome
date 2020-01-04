@@ -10,4 +10,5 @@
     <string name="succeeded">Succeeded</string>
     <string name="smile_server_error">Smile server videos cannot be played.</string>
     <string name="not_connect_cast_devices">Connect to the cast device.</string>
+    <string name="video_cache_ok">Your video has been cached.</string>
 </resources>
