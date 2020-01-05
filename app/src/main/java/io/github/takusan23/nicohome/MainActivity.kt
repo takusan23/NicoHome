@@ -3,8 +3,10 @@ package io.github.takusan23.nicohome
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
+import android.view.MenuItem
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.google.android.gms.cast.framework.CastContext
+import com.google.android.gms.cast.framework.media.widget.MiniControllerFragment
 import io.github.takusan23.nicohome.Fragment.IDFragment
 import io.github.takusan23.nicohome.Fragment.LoginFragment
 import io.github.takusan23.nicohome.Fragment.MylistFragment
@@ -15,6 +17,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     lateinit var castContext: CastContext
+    //リピート
+    var isRepeat = false
+    //自動で次の曲
+    var isAutoNextPlay = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                         .replace(main_activity_fragment.id, MylistFragment()).commit()
                     supportActionBar?.title = getString(R.string.mylist)
                 }
-                R.id.menu_setting->{
+                R.id.menu_setting -> {
                     supportFragmentManager.beginTransaction()
                         .replace(main_activity_fragment.id, PreferenceFragment()).commit()
                     supportActionBar?.title = getString(R.string.settings)
@@ -53,6 +59,8 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -60,6 +68,28 @@ class MainActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.activity_main_menu, menu)
         CastButtonFactory.setUpMediaRouteButton(this, menu, R.id.media_route_menu_item)
         return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.bar_menu_repeat -> {
+                isRepeat = !isRepeat
+                if (isRepeat) {
+                    item.setIcon(R.drawable.ic_repeat_one_24px)
+                } else {
+                    item.setIcon(R.drawable.ic_repeat_24px)
+                }
+            }
+            R.id.bar_menu_auto_next -> {
+                isAutoNextPlay = !isAutoNextPlay
+                if (isAutoNextPlay) {
+                    item.setIcon(R.drawable.ic_queue_music_24px)
+                } else {
+                    item.setIcon(R.drawable.ic_clear_24px)
+                }
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
 }

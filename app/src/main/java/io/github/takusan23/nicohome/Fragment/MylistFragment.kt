@@ -36,6 +36,8 @@ class MylistFragment : Fragment() {
     lateinit var mylistAdapter: MylistAdapter
     val mylistVideoList = arrayListOf<ArrayList<String>>()
 
+    val mylistVideoIDList = arrayListOf<String>()
+
     lateinit var pref_setting: SharedPreferences
     var user_session = ""
 
@@ -55,10 +57,7 @@ class MylistFragment : Fragment() {
         googleCast.snackbarPosView = (activity as MainActivity).main_activity_bottom_nav
 
         //ニコニコ動画再生をまとめたやつ。
-        nicoVideo = NicoVideo(
-            activity as AppCompatActivity,
-            googleCast
-        )
+        nicoVideo = NicoVideo(activity as AppCompatActivity, googleCast)
         //RecyclerView初期化
         initRecyclerView()
         mylistAdapter.nicoVideo = nicoVideo
@@ -100,6 +99,7 @@ class MylistFragment : Fragment() {
     private fun getMylist(token: String, id: String) {
         fragment_mylist_swipe_refresh.isRefreshing = true
         mylistVideoList.clear()
+        mylistVideoIDList.clear()
         val url = "https://www.nicovideo.jp/api/mylist/list"
         val formBody = FormBody.Builder().add("token", token).add("group_id", id).build()
         val request = Request.Builder()
@@ -133,11 +133,13 @@ class MylistFragment : Fragment() {
                             add(thumbnail)
                         }
                         mylistVideoList.add(item)
+                        mylistVideoIDList.add(id)
                     }
                     activity?.runOnUiThread {
                         //RecyclerView更新
                         fragment_mylist_swipe_refresh.isRefreshing = false
                         mylistAdapter.notifyDataSetChanged()
+                        nicoVideo.mylistVideoList = mylistVideoIDList
                     }
                 } else {
                     showToast("${getString(R.string.error)}\n${response.code}")

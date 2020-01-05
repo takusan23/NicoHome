@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
 import com.google.android.gms.cast.Cast
@@ -14,6 +15,8 @@ import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.material.snackbar.Snackbar
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
+import io.github.takusan23.nicohome.MainActivity
+import io.github.takusan23.nicohome.NicoVideo.NicoVideo
 import io.github.takusan23.nicohome.R
 import kotlinx.android.synthetic.main.fragment_id.*
 import kotlinx.coroutines.*
@@ -35,6 +38,8 @@ class IDFragment : Fragment() {
 
     lateinit var googleCast: GoogleCast
 
+    lateinit var nicoVideo: NicoVideo
+
     lateinit var pref_sessing: SharedPreferences
     var user_session = ""
 
@@ -54,37 +59,14 @@ class IDFragment : Fragment() {
         pref_sessing = PreferenceManager.getDefaultSharedPreferences(context)
         user_session = pref_sessing.getString("user_session", "") ?: ""
         googleCast = GoogleCast(context!!)
+        nicoVideo = NicoVideo(activity as AppCompatActivity, googleCast)
 
         fragment_id_play_button.setOnClickListener {
-            heartBeatTimer = Timer()
-            if (googleCast.castContext.sessionManager.currentCastSession != null) {
-                GlobalScope.launch {
-                    //動画情報取得
-                    val json = getNicoVideoHTML().await()
-                    //JSONぱーす
-                    val jsonObject = JSONObject(json)
-                    val title = jsonObject.getJSONObject("video").getString("title")
-                    val id = jsonObject.getJSONObject("video").getString("id")
-                    val thumbnailURL =
-                        jsonObject.getJSONObject("video").getString("thumbnailURL")
-                    googleCast.mediaTitle = title
-                    googleCast.mediaThumbnailURL = thumbnailURL
-                    googleCast.mediaSubTitle = id
-                    if (!jsonObject.getJSONObject("video").isNull("dmcInfo")) {
-                        val contentUri = getContentURI(jsonObject).await()
-                        googleCast.mediaUri = contentUri
-                        //再生
-                        activity?.runOnUiThread {
-                            googleCast.play(googleCast.castContext.sessionManager.currentCastSession)
-                        }
-                    }
-                }
-            } else {
-                Snackbar.make(
-                    fragment_id_play_button,
-                    getString(R.string.not_connect_cast_devices),
-                    Snackbar.LENGTH_SHORT
-                ).show()
+            val id = fragment_id_play_id_input.text.toString()
+            if (user_session.isNotEmpty() && id.isNotEmpty()) {
+                val mainActivity = activity as MainActivity
+                nicoVideo.mainActivity = mainActivity
+                nicoVideo.play(id)
             }
         }
     }

@@ -4,9 +4,25 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <item
+        android:id="@+id/bar_menu_auto_next"
+        android:icon="@drawable/ic_clear_24px"
+        android:title="終わったら次の曲"
+        android:tooltipText="終わったら次の曲"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/bar_menu_repeat"
+        android:icon="@drawable/ic_repeat_24px"
+        android:title="リピート"
+        android:tooltipText="リピート"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/media_route_menu_item"
         android:title="Cast"
         app:actionProviderClass="androidx.mediarouter.app.MediaRouteActionProvider"
         app:showAsAction="always"
         tools:icon="@drawable/mr_button_light" />
+
+
 </menu>

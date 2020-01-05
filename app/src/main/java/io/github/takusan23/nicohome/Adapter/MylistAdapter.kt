@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
+import io.github.takusan23.nicohome.MainActivity
 import io.github.takusan23.nicohome.NicoVideo.NicoVideo
 import io.github.takusan23.nicohome.R
 
@@ -42,6 +43,9 @@ class MylistAdapter(private val arrayListArrayAdapter: ArrayList<ArrayList<Strin
 
             //押したら再生？
             cardView.setOnClickListener {
+                //MainActivity
+                val mainActivity = context as MainActivity
+                nicoVideo.mainActivity = mainActivity
                 nicoVideo.play(videoId)
             }
 

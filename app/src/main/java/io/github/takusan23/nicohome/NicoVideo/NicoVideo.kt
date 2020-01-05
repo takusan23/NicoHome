@@ -3,8 +3,11 @@ package io.github.takusan23.nicohome.NicoVideo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import com.google.android.gms.cast.MediaStatus
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.material.snackbar.Snackbar
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
+import io.github.takusan23.nicohome.MainActivity
 import io.github.takusan23.nicohome.R
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.GlobalScope
@@ -22,6 +25,15 @@ import java.util.*
 import kotlin.concurrent.timerTask
 
 class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: GoogleCast) {
+
+    lateinit var mainActivity: MainActivity
+
+    //自動で次の動画へ
+    var isAutoNextPlay = false
+    //リピート
+    var isRepeat = false
+    //マイリスの動画配列
+    var mylistVideoList = arrayListOf<String>()
 
     var pref_setting = PreferenceManager.getDefaultSharedPreferences(appCompatActivity)
     var user_session = pref_setting.getString("user_session", "") ?: ""
@@ -49,6 +61,41 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                         googleCast.mediaTitle = title
                         googleCast.mediaThumbnailURL = thumbnailURL
                         googleCast.mediaSubTitle = id
+
+                        //リピート/次の曲へ移動する？
+                        appCompatActivity.runOnUiThread {
+                            var count = 0
+                            val castSession =
+                                googleCast.castContext.sessionManager.currentCastSession
+                            castSession.remoteMediaClient.registerCallback(object :
+                                RemoteMediaClient.Callback() {
+                                override fun onStatusUpdated() {
+                                    super.onStatusUpdated()
+                                    if (castSession.remoteMediaClient.playerState == MediaStatus.IDLE_REASON_FINISHED) {
+                                        println(castSession.remoteMediaClient.playerState == MediaStatus.PLAYER_STATE_IDLE)
+                                        //値確認。MainActivity以外だと使えない。
+                                        getValue()
+                                        if (isRepeat) {
+                                            //リピート？
+                                            println(googleCast.mediaUri)
+                                            if (googleCast.mediaUri.contains("http://192.168")) {
+                                                //smileサーバーの動画
+                                                googleCast.cachePlay(id, castSession)
+                                            } else {
+                                                //DMCさーばー
+                                                googleCast.play(castSession)
+                                            }
+                                        } else if (isAutoNextPlay) {
+                                            //次の曲
+                                            val nextId = nextVideoId(id)
+                                            play(nextId)
+                                        }
+                                    }
+                                }
+                            })
+                        }
+
+
                         if (!jsonObject.getJSONObject("video").isNull("dmcInfo")) {
                             println("新サーバー")
                             //dmcInfoが存在する。
@@ -56,6 +103,8 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                             //なお1.5GB再エンコード問題が始まった。
                             //あと止めても動く動画が消えることに。。。
                             val contentUri = getContentURI(jsonObject).await()
+                            //一度だけ送るハートビート？
+                            setOneHeartBeat(jsonObject)
                             googleCast.mediaUri = contentUri
                             //再生
                             appCompatActivity.runOnUiThread {
@@ -91,14 +140,16 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                             googleCast.nicoHistory = nicohistory
                             googleCast.mediaUri = url
                             appCompatActivity.runOnUiThread {
-                                googleCast.cachePlay(id, googleCast.castContext.sessionManager.currentCastSession)
+                                googleCast.cachePlay(
+                                    id,
+                                    googleCast.castContext.sessionManager.currentCastSession
+                                )
                             }
                         }
                     } else {
                         showToast("${appCompatActivity.getString(R.string.error)}\n${response.code}")
                     }
                 }
-
             }
         } else {
             Snackbar.make(
@@ -107,6 +158,26 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                 Snackbar.LENGTH_SHORT
             ).show()
         }
+    }
+
+    //リピート・次の曲自動再生するか
+    fun getValue() {
+        if (::mainActivity.isInitialized) {
+            isRepeat = mainActivity.isRepeat
+            isAutoNextPlay = mainActivity.isAutoNextPlay
+        }
+    }
+
+    fun nextVideoId(oldVideoId: String): String {
+        //配列の要素数が0以上で
+        if (mylistVideoList.size != 0) {
+            val indexOf = mylistVideoList.indexOf(oldVideoId) + 1
+            if (mylistVideoList.size < indexOf) {
+                return ""
+            }
+            return mylistVideoList.get(indexOf)
+        }
+        return ""
     }
 
     //ニコ動へアクセスしてHTMLを取得する。
@@ -201,13 +272,13 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
         if (response.isSuccessful) {
             val responseString = response.body?.string()
             val jsonObject = JSONObject(responseString)
-            val session = jsonObject.getJSONObject("data").getJSONObject("session")
-            val id = session.getString("id")
+            val data = jsonObject.getJSONObject("data")
+            val id = data.getJSONObject("session").getString("id")
             //サーバーから切られないようにハートビートを送信する
             val url = "https://api.dmc.nico/api/sessions/${id}?_format=json&_method=PUT"
-            heatBeat(url, jsonObject.toString())
+            heatBeat(url, data.toString())
             //動画のリンク
-            val content_uri = session.getString("content_uri")
+            val content_uri = data.getJSONObject("session").getString("content_uri")
             return@async content_uri
         } else {
             showToast("${appCompatActivity.getString(R.string.error)}\n${response.code}")
@@ -215,7 +286,108 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
         return@async ""
     }
 
+    //一度だけ別のidでハードビートを行っているのでこちらでも実装する？ 同期処理です
+    fun setOneHeartBeat(jsonObject: JSONObject) {
+        val dmcInfo = jsonObject.getJSONObject("video").getJSONObject("dmcInfo")
+        //無いときは送信しない
+        if (!dmcInfo.isNull("storyboard_session_api")) {
+            val storyboardSessionAPI = dmcInfo.getJSONObject("storyboard_session_api")
+            val sessionPOSTJSON = JSONObject().apply {
+                put("session", JSONObject().apply {
+                    put("recipe_id", storyboardSessionAPI.getString("recipe_id"))
+                    put("content_id", storyboardSessionAPI.getString("content_id"))
+                    put("content_type", "video")
+                    put("content_src_id_sets", JSONArray().apply {
+                        this.put(JSONObject().apply {
+                            this.put("content_src_ids", storyboardSessionAPI.getJSONArray("videos"))
+                        })
+                    })
+                    put("timing_constraint", "unlimited")
+                    put("keep_method", JSONObject().apply {
+                        this.put("heartbeat", JSONObject().apply {
+                            this.put("lifetime", 300000)
+                        })
+                    })
+                    put("protocol", JSONObject().apply {
+                        this.put("name", "http")
+                        this.put("parameters", JSONObject().apply {
+                            this.put("http_parameters", JSONObject().apply {
+                                this.put("parameters", JSONObject().apply {
+                                    this.put("storyboard_download_parameters", JSONObject().apply {
+                                        this.put("use_well_known_port", "yes")
+                                        this.put("use_ssl", "yes")
+                                    })
+                                })
+                            })
+                        })
+                    })
+                    put("content_uri", "")
+                    put("session_operation_auth", JSONObject().apply {
+                        this.put("session_operation_auth_by_signature", JSONObject().apply {
+                            this.put("token", storyboardSessionAPI.getString("token"))
+                            this.put("signature", storyboardSessionAPI.getString("signature"))
+                        })
+                    })
+                    put("content_auth", JSONObject().apply {
+                        this.put("auth_type", "ht2")
+                        this.put(
+                            "content_key_timeout",
+                            storyboardSessionAPI.getInt("content_key_timeout")
+                        )
+                        this.put("service_id", "nicovideo")
+                        this.put(
+                            "service_user_id",
+                            storyboardSessionAPI.getString("service_user_id")
+                        )
+                    })
+                    put("client_info", JSONObject().apply {
+                        this.put("player_id", storyboardSessionAPI.getString("player_id"))
+                    })
+                    put("priority", storyboardSessionAPI.getDouble("priority"))
+                })
+            }
+            //POSTする。
+            val requestBody =
+                sessionPOSTJSON.toString().toRequestBody("application/json".toMediaTypeOrNull())
+            val request = Request.Builder()
+                .url("https://api.dmc.nico/api/sessions?_format=json")
+                .post(requestBody)
+                .addHeader("User-Agent", "NicoHome;@takusan_23")
+                .addHeader("Content-Type", "application/json")
+                .build()
+            val okHttpClient = OkHttpClient()
+            val response = okHttpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+
+                //成功したら　レスポンスJSONから idを取得する
+                val jsonObject = JSONObject(response.body?.string())
+                val data = jsonObject.getJSONObject("data")
+                val id = data.getJSONObject("session").getString("id")
+                val requestBody =
+                    data.toString().toRequestBody("application/json".toMediaTypeOrNull())
+                val request = Request.Builder()
+                    .url("https://api.dmc.nico/api/sessions/${id}?_format=json&_method=PUT")
+                    .post(requestBody)
+                    .addHeader("User-Agent", "NicoHome;@takusan_23")
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+                val okHttpClient = OkHttpClient()
+                val response = okHttpClient.newCall(request).execute()
+                if (response.isSuccessful) {
+                    println("ハートビート　一度だけ　送信成功 ${response.code}")
+                } else {
+                    showToast("${appCompatActivity.getString(R.string.error)}\n${response.code}")
+                }
+
+            } else {
+                showToast("${appCompatActivity.getString(R.string.error)}\n${response.code}")
+            }
+
+        }
+    }
+
     //ハートビート？40秒ごとに送信しないといけない模様。
+    //ハートビートPOSTで送るJSONはsession_apiでAPI叩いたあとのJSONのdataの中身。レスポンスJSON全部投げるわけではない。
     fun heatBeat(url: String, json: String) {
         heartBeatTimer.schedule(timerTask {
             val request = Request.Builder()
@@ -230,7 +402,7 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                 }
 
                 override fun onResponse(call: Call, response: Response) {
-                    println("ハートビート")
+                    println("ハートビート ${response.code}")
                 }
             })
         }, 40 * 1000, 40 * 1000)

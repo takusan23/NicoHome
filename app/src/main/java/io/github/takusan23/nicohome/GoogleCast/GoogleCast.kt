@@ -12,8 +12,10 @@ import com.google.android.gms.cast.MediaStatus
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
+import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.images.WebImage
 import com.google.android.material.snackbar.Snackbar
+import io.github.takusan23.nicohome.MainActivity
 import io.github.takusan23.nicohome.NicoVideo.NicoVideoCache
 import io.github.takusan23.nicohome.R
 import io.github.takusan23.nicohome.WebServer.HttpServer
@@ -25,7 +27,6 @@ import java.io.File
 class GoogleCast(val context: Context) {
 
     val castContext = CastContext.getSharedInstance(context)
-    var nicoVideoCache = NicoVideoCache(context)
 
     //Webサーバー。Smileサーバー対策
     val httpServer = HttpServer(context)
@@ -142,6 +143,7 @@ class GoogleCast(val context: Context) {
 */
 
     }
+
 
     /*
     * smileサーバーの動画をキャッシュ領域に落とす。
