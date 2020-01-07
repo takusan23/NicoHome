@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.bar_menu_auto_next -> {
                 isAutoNextPlay = !isAutoNextPlay
-                nicoVideo.isAutoNextPlay = isRepeat
+                nicoVideo.isAutoNextPlay = isAutoNextPlay
                 if (isAutoNextPlay) {
                     item.setIcon(R.drawable.ic_queue_music_24px)
                 } else {
