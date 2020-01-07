@@ -18,4 +18,5 @@
     <string name="setting_cache_clear_title">Clear cache</string>
     <string name="setting_cache_clear_description">Delete the video saved to play the video on the smile server.</string>
     <string name="this_app">About this app</string>
+    <string name="setting_autoplay_cache_title">Automatically cache when moving to the next song automatically</string>
 </resources>

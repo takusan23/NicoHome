@@ -6,6 +6,10 @@
         android:summary="@string/setting_cache_clear_description"
         android:title="@string/setting_cache_clear_title" />
 
+    <SwitchPreference
+        android:key="setting_autoplay_cache"
+        android:title="@string/setting_autoplay_cache_title" />
+
     <Preference
         android:key="setting_licence"
         android:title="@string/licence" />

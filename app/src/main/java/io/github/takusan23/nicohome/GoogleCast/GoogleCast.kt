@@ -119,7 +119,7 @@ class GoogleCast(val context: Context) {
         }
         val remoteMediaClient = castSession?.remoteMediaClient
         remoteMediaClient?.load(mediaLoadRequestData.build())
-
+        println("さいせいかいし")
 
 /*
         //ExoPlayer
@@ -171,12 +171,8 @@ class GoogleCast(val context: Context) {
                 if (!isExists) {
                     //キャッシュ領域にない場合は取りに行く。
                     val nicoVideoCache = NicoVideoCache(context)
-                    //キャッシュが必要なのでSnackbarで聞く
-                    Snackbar.make(
-                        snackbarView,
-                        context.getString(R.string.cache_snackbar),
-                        Snackbar.LENGTH_SHORT
-                    ).setAction(context.getString(R.string.cache_get)) {
+                    if (pref_sessiong.getBoolean("setting_autoplay_cache", false)) {
+                        println("自動再生自動キャッシュ取得")
                         GlobalScope.launch {
                             //ファイルの場所を返す
                             val path =
@@ -188,7 +184,27 @@ class GoogleCast(val context: Context) {
                             mediaUri = "http://${httpServer.getIPAddress()}"
                             (context as Activity).runOnUiThread { play(session) }
                         }
-                    }.show()
+                    } else {
+                        //キャッシュが必要なのでSnackbarで聞く
+                        Snackbar.make(
+                            snackbarView,
+                            context.getString(R.string.cache_snackbar),
+                            Snackbar.LENGTH_SHORT
+                        ).setAction(context.getString(R.string.cache_get)) {
+                            GlobalScope.launch {
+                                //ファイルの場所を返す
+                                val path =
+                                    nicoVideoCache.getVideo(id, mediaUri, user_session, nicoHistory)
+                                        .await()
+                                //Webサーバー開始
+                                httpServer.serveVideo(path)
+                                //GoogleCastで再生
+                                mediaUri = "http://${httpServer.getIPAddress()}"
+                                (context as Activity).runOnUiThread { play(session) }
+                            }
+                        }.show()
+                    }
+
                 } else {
                     //キャッシュ領域にあるのでWebサーバーを展開
                     if (File(path).exists()) {

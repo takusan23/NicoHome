@@ -19,4 +19,5 @@
     <string name="setting_cache_clear_title">キャッシュクリア</string>
     <string name="setting_cache_clear_description">smileサーバーの動画を再生するために保存した動画を削除します。</string>
     <string name="this_app">このアプリについて</string>
+    <string name="setting_autoplay_cache_title">自動で次の曲に移動するとき、キャッシュを自動で行う</string>
 </resources>

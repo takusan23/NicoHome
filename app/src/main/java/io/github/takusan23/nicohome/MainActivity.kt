@@ -12,11 +12,17 @@ import io.github.takusan23.nicohome.Fragment.LoginFragment
 import io.github.takusan23.nicohome.Fragment.MylistFragment
 import io.github.takusan23.nicohome.Fragment.PreferenceFragment
 import io.github.takusan23.nicohome.GoogleCast.GoogleCast
+import io.github.takusan23.nicohome.NicoVideo.NicoVideo
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var castContext: CastContext
+
+    //GoogleCastまとめたやつ
+    lateinit var googleCast: GoogleCast
+    lateinit var nicoVideo: NicoVideo
+
     //リピート
     var isRepeat = false
     //自動で次の曲
@@ -27,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         castContext = CastContext.getSharedInstance(this)
+
+        googleCast = GoogleCast(this)
+        nicoVideo = NicoVideo(this, googleCast)
 
         val videoIDFragment = IDFragment()
         supportFragmentManager.beginTransaction()
@@ -74,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.bar_menu_repeat -> {
                 isRepeat = !isRepeat
+                nicoVideo.isRepeat = isRepeat
                 if (isRepeat) {
                     item.setIcon(R.drawable.ic_repeat_one_24px)
                 } else {
@@ -82,6 +92,7 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.bar_menu_auto_next -> {
                 isAutoNextPlay = !isAutoNextPlay
+                nicoVideo.isAutoNextPlay = isRepeat
                 if (isAutoNextPlay) {
                     item.setIcon(R.drawable.ic_queue_music_24px)
                 } else {
@@ -90,6 +101,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        googleCast.resume()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        googleCast.pause()
     }
 
 }

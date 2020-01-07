@@ -52,12 +52,12 @@ class MylistFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        googleCast = GoogleCast(context!!)
+        googleCast = (activity as MainActivity).googleCast
         googleCast.snackbarView = fragment_mylist_recyclerview
         googleCast.snackbarPosView = (activity as MainActivity).main_activity_bottom_nav
 
         //ニコニコ動画再生をまとめたやつ。
-        nicoVideo = NicoVideo(activity as AppCompatActivity, googleCast)
+        nicoVideo = (activity as MainActivity).nicoVideo
         //RecyclerView初期化
         initRecyclerView()
         mylistAdapter.nicoVideo = nicoVideo

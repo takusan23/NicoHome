@@ -39,16 +39,19 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
     var user_session = pref_setting.getString("user_session", "") ?: ""
     var heartBeatTimer = Timer()
 
+    var tmpId = ""
+
+    lateinit var callback: RemoteMediaClient.Callback
+
     //再生する。
     fun play(id: String) {
-        heartBeatTimer.cancel()
-        heartBeatTimer = Timer()
         if (googleCast.castContext.sessionManager.currentCastSession != null) {
             GlobalScope.launch {
                 //動画情報取得
                 val response = getNicoVideoHTML(id).await()
                 response?.apply {
                     if (isSuccessful) {
+                        println("取得成功")
                         val html = Jsoup.parse(body?.string())
                         val json =
                             html.getElementById("js-initial-watch-data").attr("data-api-data")
@@ -61,20 +64,19 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                         googleCast.mediaTitle = title
                         googleCast.mediaThumbnailURL = thumbnailURL
                         googleCast.mediaSubTitle = id
+                        tmpId = id
 
                         //リピート/次の曲へ移動する？
                         appCompatActivity.runOnUiThread {
-                            var count = 0
                             val castSession =
                                 googleCast.castContext.sessionManager.currentCastSession
-                            castSession.remoteMediaClient.registerCallback(object :
-                                RemoteMediaClient.Callback() {
+
+                            callback = object : RemoteMediaClient.Callback() {
                                 override fun onStatusUpdated() {
                                     super.onStatusUpdated()
                                     if (castSession.remoteMediaClient.playerState == MediaStatus.IDLE_REASON_FINISHED) {
-                                        println(castSession.remoteMediaClient.playerState == MediaStatus.PLAYER_STATE_IDLE)
-                                        //値確認。MainActivity以外だと使えない。
-                                        getValue()
+                                        castSession.remoteMediaClient.unregisterCallback(callback)
+                                        println("再生終了 ${castSession.remoteMediaClient.playerState == MediaStatus.IDLE_REASON_FINISHED}")
                                         if (isRepeat) {
                                             //リピート？
                                             println(googleCast.mediaUri)
@@ -87,12 +89,16 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                                             }
                                         } else if (isAutoNextPlay) {
                                             //次の曲
-                                            val nextId = nextVideoId(id)
-                                            play(nextId)
+                                            val nextId = nextVideoId(googleCast.mediaSubTitle)
+                                            if (tmpId != nextId) {
+                                                play(nextId)
+                                                println("次の曲 : $nextId")
+                                            }
                                         }
                                     }
                                 }
-                            })
+                            }
+                            castSession.remoteMediaClient.registerCallback(callback)
                         }
 
 
@@ -139,6 +145,7 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
                             }
                             googleCast.nicoHistory = nicohistory
                             googleCast.mediaUri = url
+                            //自動再生時には自動でキャッシュ取得を行うか？
                             appCompatActivity.runOnUiThread {
                                 googleCast.cachePlay(
                                     id,
@@ -172,9 +179,9 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
         //配列の要素数が0以上で
         if (mylistVideoList.size != 0) {
             val indexOf = mylistVideoList.indexOf(oldVideoId) + 1
-            if (mylistVideoList.size < indexOf) {
-                return ""
-            }
+            //  if (mylistVideoList.size < indexOf) {
+            //      return ""
+            //  }
             return mylistVideoList.get(indexOf)
         }
         return ""
@@ -389,6 +396,8 @@ class NicoVideo(var appCompatActivity: AppCompatActivity, var googleCast: Google
     //ハートビート？40秒ごとに送信しないといけない模様。
     //ハートビートPOSTで送るJSONはsession_apiでAPI叩いたあとのJSONのdataの中身。レスポンスJSON全部投げるわけではない。
     fun heatBeat(url: String, json: String) {
+        heartBeatTimer.cancel()
+        heartBeatTimer = Timer()
         heartBeatTimer.schedule(timerTask {
             val request = Request.Builder()
                 .url(url)

@@ -37,7 +37,6 @@ class IDFragment : Fragment() {
     lateinit var sessionManagerListener: SessionManagerListener<CastSession>
 
     lateinit var googleCast: GoogleCast
-
     lateinit var nicoVideo: NicoVideo
 
     lateinit var pref_sessing: SharedPreferences
@@ -58,8 +57,8 @@ class IDFragment : Fragment() {
 
         pref_sessing = PreferenceManager.getDefaultSharedPreferences(context)
         user_session = pref_sessing.getString("user_session", "") ?: ""
-        googleCast = GoogleCast(context!!)
-        nicoVideo = NicoVideo(activity as AppCompatActivity, googleCast)
+        googleCast = (activity as MainActivity).googleCast
+        nicoVideo = (activity as MainActivity).nicoVideo
 
         fragment_id_play_button.setOnClickListener {
             val id = fragment_id_play_id_input.text.toString()
@@ -231,16 +230,6 @@ class IDFragment : Fragment() {
         activity?.runOnUiThread {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        googleCast.pause()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        googleCast.resume()
     }
 
     override fun onDestroy() {
